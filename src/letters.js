@@ -39,7 +39,9 @@ function envelope(letter, animate) {
   const item = h('li', `mail-item${animate ? ' arrive' : ''}`);
   const btn = h('button', 'envelope-btn', { type: 'button', 'aria-label': `${L.from || 'from'} ${letter.name}` });
   const env = h('span', 'envelope');
-  env.appendChild(h('span', 'envelope-seal', { text: '♡', 'aria-hidden': 'true' }));
+  const seal = h('span', 'envelope-seal', { 'aria-hidden': 'true' });
+  seal.appendChild(h('img', '', { src: '/assets/start.webp', alt: '', draggable: 'false' }));
+  env.appendChild(seal);
   const dot = h('span', 'envelope-dot', { 'aria-label': 'unread' });
   dot.hidden = read.has(letter.id);
   env.appendChild(dot);
@@ -104,7 +106,7 @@ function openLetter(id) {
     mode: 'read',
     message: letter.message,
     name: letter.name,
-    date: formatDate(letter.createdAt),
+    date: formatDate(CFG.birthday || letter.createdAt),
     stripSrc: letter.hasStrip ? `/api/strip?key=${encodeURIComponent(key)}&id=${encodeURIComponent(letter.id)}` : '',
   });
   inner.appendChild(stage.el);

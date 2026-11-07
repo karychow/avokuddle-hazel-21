@@ -13,6 +13,9 @@ const h = (tag, cls, attrs = {}) => {
 export { h };
 
 export function formatDate(iso) {
+  // A plain YYYY-MM-DD (the birthday) is shown as written, with no timezone shift.
+  const plain = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (plain) return `${plain[3]}.${plain[2]}.${plain[1].slice(2)}`;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   return [d.getDate(), d.getMonth() + 1, String(d.getFullYear()).slice(2)]

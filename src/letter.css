@@ -418,16 +418,16 @@ body.modal-open { overflow: hidden; }
   z-index: 2;
   left: 50%;
   top: 58%;
-  width: 26%;
+  width: 34%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: radial-gradient(circle at 35% 30%, #a3374b, #6e1a29 60%, #4a0f1b);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, .45);
-  color: rgba(243, 234, 216, .8);
-  font-size: clamp(14px, 4vw, 20px);
+}
+/* the framed-lily stamp from the booth's start button */
+.envelope-seal img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 7px rgba(0, 0, 0, .45)) drop-shadow(0 0 6px rgba(207, 168, 98, .2));
 }
 .envelope-name {
   display: block;

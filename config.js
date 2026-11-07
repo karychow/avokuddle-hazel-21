@@ -6,6 +6,8 @@ const recipientName = 'hazel';
 export default {
   recipientName,
   occasion: `${recipientName}'s 21`,
+  // The birthday (YYYY-MM-DD). Printed on every strip and letter.
+  birthday: '2026-11-08',
   siteName: 'avokuddle studio',
   stripFilename: `${recipientName}s-21-strip`,
 

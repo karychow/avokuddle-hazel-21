@@ -245,9 +245,13 @@
     const who = names.filter(Boolean).join(' & ');
     if (who) sketchText(ctx, who, cx, fy + 148, 38);
 
+    // The birthday from config.js (YYYY-MM-DD), else today.
+    const bday = String((window.SITE_CONFIG && window.SITE_CONFIG.birthday) || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
     const d = new Date();
-    const date = [d.getDate(), d.getMonth() + 1, String(d.getFullYear()).slice(2)]
-      .map((n) => String(n).padStart(2, '0')).join(' . ');
+    const parts = bday
+      ? [bday[3], bday[2], bday[1].slice(2)]
+      : [d.getDate(), d.getMonth() + 1, String(d.getFullYear()).slice(2)];
+    const date = parts.map((n) => String(n).padStart(2, '0')).join(' . ');
     sketchText(ctx, date, cx, fy + (who ? 186 : 150), 28);
 
     return c;
