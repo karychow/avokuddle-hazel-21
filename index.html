@@ -23,6 +23,8 @@
   <canvas class="lily lily-left" id="lilyLeft" aria-hidden="true"></canvas>
   <canvas class="lily lily-right" id="lilyRight" aria-hidden="true"></canvas>
 
+  <button type="button" class="chip friends-chip ink" id="friendsBtn">{{labels.friendsButton}}</button>
+
   <aside class="player" id="player">
     <button type="button" class="vinyl" id="vinyl" aria-label="add a song">
       <span class="disc"><img src="/assets/vinyl.webp" alt=""><span class="label" id="label"></span></span>
@@ -102,10 +104,7 @@
       </section>
     </main>
 
-    <footer class="foot">
-      <span class="ink">{{siteName}}</span>
-      <button type="button" class="chip friends-chip ink" id="friendsBtn">{{labels.friendsButton}}</button>
-    </footer>
+    <footer class="foot ink">{{siteName}}</footer>
   </div>
 
   <dialog class="code-dialog" id="codeDialog" aria-labelledby="codeTitle">

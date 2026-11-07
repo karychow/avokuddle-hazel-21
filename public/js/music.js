@@ -135,6 +135,9 @@
     root.innerHTML = '<button type="button" class="vinyl" aria-label="play music">'
       + '<span class="disc"><img src="/assets/vinyl.webp" alt=""><span class="label"></span></span>'
       + ARM + '</button>';
+    const caption = document.createElement('span');
+    caption.className = 'vinyl-caption';
+    root.appendChild(caption);
     const host = document.createElement('div');
     host.className = 'vinyl-embed';
     const slot = document.createElement('div');
@@ -150,7 +153,8 @@
       onChange(p) {
         button.setAttribute('aria-label', p.playing ? 'pause music' : 'play music');
         root.classList.toggle('has-song', !!p.uri);
-        if (p.playing) { clearTimeout(revealTimer); }
+        caption.textContent = p.uri ? (p.title || 'tap the record to play') : '';
+        if (p.playing) { clearTimeout(revealTimer); host.classList.remove('show'); }
       },
     });
 

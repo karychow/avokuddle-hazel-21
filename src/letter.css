@@ -143,16 +143,14 @@ body.modal-open { overflow: hidden; }
   border-radius: 2px;
 }
 .lt-strip-frame { object-fit: cover; }
+/* the friend's strip sits exactly on top of film-strip.png and covers it */
 .lt-strip-photo {
-  inset: 3.5% 6%;
-  width: 88%;
-  height: 93%;
-  object-fit: contain;
+  object-fit: cover;
   opacity: 0;
   transition: opacity .6s;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, .55);
 }
 .lt-strip.has-photo .lt-strip-photo { opacity: 1; }
+.lt-strip.has-photo .lt-strip-frame { visibility: hidden; }
 
 .lt-embed { margin-top: 10px; }
 
@@ -162,14 +160,55 @@ body.modal-open { overflow: hidden; }
 .vinyl-solo.playing .disc { animation-play-state: running; }
 .vinyl-solo.playing .arm { transform: rotate(0deg); }
 .vinyl-solo:not(.has-song) .vinyl { cursor: default; }
-.vinyl-embed { height: 0; overflow: hidden; visibility: hidden; }
-.vinyl-embed.show { height: auto; visibility: visible; }
+.vinyl-caption {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  max-width: 125%;
+  margin-top: 3px;
+  padding: 0 9px 2px;
+  border-radius: 999px;
+  background: rgba(243, 234, 216, .9);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, .35);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--ink-brown);
+}
+.vinyl-caption:empty { display: none; }
+/* Hidden the same way as the booth's song panel: full size but invisible.
+   (A 0px-tall embed never starts playing.) */
+.lt-embed { position: relative; }
+.vinyl-embed {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.vinyl-embed.show { position: static; visibility: visible; pointer-events: auto; }
 .vinyl-embed iframe { display: block; border-radius: 12px; }
 
 /* ---------- friends: chip, code dialog, composer ---------- */
 
-.foot { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
-.friends-chip { font-size: 19px; padding: 1px 14px 4px; }
+/* pinned top-left, mirroring the record in the top-right */
+.friends-chip {
+  position: fixed;
+  z-index: 20;
+  top: max(14px, env(safe-area-inset-top, 0px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  font-size: 20px;
+  padding: 1px 14px 4px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+@media (max-width: 560px) {
+  .friends-chip { left: max(12px, env(safe-area-inset-left, 0px)); font-size: 17px; padding: 0 11px 3px; }
+}
 .friends-chip.is-friend { border-color: rgba(207, 168, 98, .55); color: var(--ivory); }
 .letter-cta[hidden] { display: none; }
 /* keep the result view on one screen when the letter button adds a row */

@@ -111,7 +111,9 @@ function openLetter(id) {
   el.view.appendChild(inner);
 
   const uri = letter.songUrl && window.music ? window.music.parse(letter.songUrl) : null;
-  if (uri && stage.vinyl) stage.vinyl.load(uri, { play: false });
+  // Opening the letter is a tap, so try to start the song straight away like
+  // the booth's record. If the browser blocks it, tapping the record plays it.
+  if (uri && stage.vinyl) stage.vinyl.load(uri, { play: true });
 
   const close = () => {
     stage.destroy();

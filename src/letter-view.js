@@ -78,7 +78,11 @@ export function letterStage({ mode, message = '', name = '', date = '', stripSrc
   const strip = h('div', 'lt-strip');
   strip.appendChild(h('img', 'lt-strip-frame', { src: '/assets/film-strip.png', alt: '', draggable: 'false' }));
   const photo = h('img', 'lt-strip-photo', { alt: name ? `photo strip from ${name}` : 'photo strip' });
-  photo.addEventListener('load', () => strip.classList.add('has-photo'));
+  photo.addEventListener('load', () => {
+    // Match the box to the friend's strip so it covers the template exactly.
+    if (photo.naturalWidth && photo.naturalHeight) strip.style.aspectRatio = `${photo.naturalWidth} / ${photo.naturalHeight}`;
+    strip.classList.add('has-photo');
+  });
   photo.addEventListener('error', () => strip.classList.remove('has-photo'));
   if (stripSrc) photo.src = stripSrc;
   strip.appendChild(photo);
