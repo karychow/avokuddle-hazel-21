@@ -111,11 +111,18 @@
   <dialog class="code-dialog" id="codeDialog" aria-labelledby="codeTitle">
     <form class="code-form" id="codeForm" method="dialog" autocomplete="off">
       <button type="button" class="dialog-x" id="codeClose" aria-label="{{labels.close}}">×</button>
-      <p class="code-title ink" id="codeTitle">{{labels.codePrompt}}</p>
-      <label class="sr" for="codeInput">{{labels.codePrompt}}</label>
-      <input id="codeInput" class="code-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="100" placeholder="{{labels.codePlaceholder}}" required>
-      <p class="code-msg ink" id="codeMsg" aria-live="polite"></p>
-      <button type="submit" class="chip solid ink" id="codeSubmit">{{labels.codeSubmit}}</button>
+      <div class="code-step" id="codeEntry">
+        <p class="code-title ink" id="codeTitle">{{labels.codePrompt}}</p>
+        <label class="sr" for="codeInput">{{labels.codePrompt}}</label>
+        <input id="codeInput" class="code-input" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="100" placeholder="{{labels.codePlaceholder}}">
+        <p class="code-msg ink" id="codeMsg" aria-live="polite"></p>
+        <button type="submit" class="chip solid ink" id="codeSubmit">{{labels.codeSubmit}}</button>
+      </div>
+      <div class="code-step" id="codeOk" hidden>
+        <p class="code-title ink">{{labels.codeWelcome}}</p>
+        <p class="code-hint ink" id="codeHint" aria-live="polite"></p>
+        <button type="button" class="chip solid ink" id="codeNext"></button>
+      </div>
     </form>
   </dialog>
 

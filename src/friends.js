@@ -19,6 +19,12 @@ const el = {
   msg: $('codeMsg'),
   submit: $('codeSubmit'),
   close: $('codeClose'),
+  entry: $('codeEntry'),
+  ok: $('codeOk'),
+  hint: $('codeHint'),
+  next: $('codeNext'),
+  start: $('start'),
+  cameraOn: $('cameraOn'),
   write: $('writeLetter'),
   composer: $('composer'),
   name: $('name'),
@@ -29,23 +35,52 @@ let stripReady = false;
 let sentCanvas = null;
 const draft = { message: '', name: '', song: '' };
 
+// Is there a finished strip this friend hasn't written a letter for yet?
+function letterReady() {
+  const canvas = window.booth && window.booth.strip();
+  return !!(stripReady && canvas && canvas !== sentCanvas);
+}
+
 function render() {
   const isFriend = !!friendCode;
   el.friendsBtn.textContent = isFriend ? L.friendsVerified : L.friendsButton;
   el.friendsBtn.classList.toggle('is-friend', isFriend);
-  const canvas = window.booth && window.booth.strip();
-  el.write.hidden = !(isFriend && stripReady && canvas && canvas !== sentCanvas);
+  el.write.hidden = !(isFriend && letterReady());
 }
 
 /* ---------- friends code ---------- */
 
+// After the code is accepted, say what to do next instead of just closing.
+function showWelcome() {
+  el.entry.hidden = true;
+  el.ok.hidden = false;
+  const ready = letterReady();
+  const sentThisStrip = !!(stripReady && sentCanvas && window.booth && window.booth.strip() === sentCanvas);
+  el.hint.textContent = ready ? L.codeHintLetter : (sentThisStrip ? L.codeHintSent : L.codeHintStrip);
+  el.next.textContent = ready ? L.codeGoLetter : L.codeGoStrip;
+  el.next.dataset.go = ready ? 'letter' : 'strip';
+  setTimeout(() => el.next.focus(), 30);
+}
+
 function openDialog() {
   el.msg.textContent = '';
   el.input.value = '';
+  if (friendCode) showWelcome();
+  else { el.entry.hidden = false; el.ok.hidden = true; }
   if (typeof el.dialog.showModal === 'function') el.dialog.showModal();
   else el.dialog.setAttribute('open', '');
-  setTimeout(() => el.input.focus(), 30);
+  if (!friendCode) setTimeout(() => el.input.focus(), 30);
 }
+
+el.next.addEventListener('click', () => {
+  closeDialog();
+  if (el.next.dataset.go === 'letter') { openComposer(); return; }
+  // Take them back to the booth: if a strip is showing, start a new one.
+  const again = document.getElementById('again');
+  if (stripReady && again) again.click();
+  if (!el.cameraOn.hidden) el.cameraOn.focus();
+  else el.start.focus();
+});
 
 function closeDialog() {
   if (typeof el.dialog.close === 'function') el.dialog.close();
@@ -65,8 +100,9 @@ el.dialog.addEventListener('click', (e) => { if (e.target === el.dialog) closeDi
 
 el.form.addEventListener('submit', async (e) => {
   e.preventDefault();
+  if (!el.ok.hidden) return;
   const code = el.input.value.trim();
-  if (!code) return;
+  if (!code) { el.input.focus(); return; }
   el.submit.disabled = true;
   el.submit.textContent = L.codeChecking;
   try {
@@ -78,8 +114,8 @@ el.form.addEventListener('submit', async (e) => {
     if (res.ok) {
       friendCode = code;
       session.set('avk-friend', code);
-      closeDialog();
       render();
+      showWelcome();
     } else if (res.status === 401) {
       sayCode(L.codeWrong);
       el.input.select();

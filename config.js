@@ -25,6 +25,12 @@ export default {
     codeWrong: "hmm, that's not it",
     codeLimited: 'too many tries, wait a few minutes ♡',
     codeOffline: "couldn't check right now, try again",
+    codeWelcome: "you're in ♡",
+    codeHintStrip: `take your photo strip first, then write ${recipientName} a letter`,
+    codeHintLetter: `your strip is ready, write ${recipientName} a letter`,
+    codeHintSent: `letter sent ♡ take another strip to write ${recipientName} another`,
+    codeGoStrip: 'take my strip',
+    codeGoLetter: 'write the letter',
 
     writeLetter: `write ${recipientName} a letter ♡`,
     letterPlaceholder: `dear ${recipientName},`,
