@@ -2,14 +2,17 @@
 import crypto from 'node:crypto';
 import { Redis } from '@upstash/redis';
 
+// Values pasted into the dashboard sometimes keep stray spaces or quotes.
+const clean = (v) => String(v || '').trim().replace(/^(["'])(.*)\1$/, '$2').trim();
+
 // Vercel env var names (set in the Vercel dashboard, never in client code).
 export const env = {
   friendsCode: () => process.env.FRIENDSCODE || '',
   hazelKey: () => process.env.HAZELKEY || '',
-  gmailUser: () => process.env.GMAILUSER || '',
-  gmailPass: () => (process.env.GMAILAPPPASSWORD || '').replace(/\s+/g, ''),
-  recipient: () => process.env.RECIPIENTEMAIL || '',
-  siteUrl: () => (process.env.SITEURL || '').replace(/\/+$/, ''),
+  gmailUser: () => clean(process.env.GMAILUSER),
+  gmailPass: () => clean(process.env.GMAILAPPPASSWORD).replace(/\s+/g, ''),
+  recipient: () => clean(process.env.RECIPIENTEMAIL),
+  siteUrl: () => clean(process.env.SITEURL).replace(/\/+$/, ''),
   blobStoreId: () => process.env.BLOB_STORE_ID || '',
 };
 
