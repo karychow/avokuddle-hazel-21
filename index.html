@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>avokuddle studio</title>
+  <meta name="description" content="hazel's 21">
+  <meta name="theme-color" content="#140509">
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=3d3">
+</head>
+<body>
+  <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <filter id="sketch" x="-4%" y="-20%" width="108%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.7" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
+
+  <canvas class="lily lily-left" id="lilyLeft" aria-hidden="true"></canvas>
+  <canvas class="lily lily-right" id="lilyRight" aria-hidden="true"></canvas>
+
+  <aside class="player" id="player">
+    <button type="button" class="vinyl" id="vinyl" aria-label="add a song">
+      <span class="disc"><img src="assets/vinyl.webp" alt=""><span class="label" id="label"></span></span>
+      <svg class="arm" viewBox="0 0 40 60" aria-hidden="true">
+        <circle cx="32" cy="6" r="4.5" fill="#2a0b12" stroke="#f3ead8" stroke-width="1.2"/>
+        <path d="M32 6 L30 30 L15 49" fill="none" stroke="#f3ead8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="9" y="47" width="10" height="6" rx="1.5" transform="rotate(-40 14 50)" fill="#cfa862" stroke="#2a0b12" stroke-width=".8"/>
+      </svg>
+    </button>
+    <button type="button" class="track ink" id="track" aria-expanded="false" aria-controls="songPanel">add a song</button>
+    <div class="song-panel closed" id="songPanel">
+      <form class="song-form ink" id="songForm" autocomplete="off">
+        <label class="sr" for="songUrl">spotify link</label>
+        <input id="songUrl" type="url" inputmode="url" placeholder="paste a spotify link" spellcheck="false">
+        <button type="submit" class="chip solid">play</button>
+      </form>
+      <p class="song-error ink" id="songError" aria-live="polite"></p>
+      <div class="song-embed"><div id="spotifyEmbed"></div></div>
+    </div>
+  </aside>
+
+  <div class="app">
+    <p class="mark ink">hazel's 21</p>
+
+    <div class="bar">
+      <div class="modes ink" role="radiogroup" aria-label="mode">
+        <button type="button" class="mode is-on" data-mode="solo" role="radio" aria-checked="true">just me</button>
+        <button type="button" class="mode" data-mode="together" role="radio" aria-checked="false">together ♡</button>
+      </div>
+      <div class="namebar ink">
+        <label class="sr" for="name">your name</label>
+        <input id="name" type="text" maxlength="20" placeholder="your name" autocomplete="given-name">
+        <button type="button" id="invite" class="chip" hidden>copy invite</button>
+      </div>
+    </div>
+
+    <main class="stage">
+      <section class="card" id="booth">
+        <div class="frame solo" id="frame">
+          <div class="pane" id="paneMe">
+            <video id="videoMe" playsinline muted autoplay></video>
+            <span class="tag ink" id="tagMe">you</span>
+          </div>
+          <div class="pane them" id="paneThem">
+            <video id="videoThem" playsinline autoplay></video>
+            <span class="waiting ink" id="waiting">waiting for your person</span>
+            <span class="tag ink" id="tagThem">your person</span>
+          </div>
+          <div class="lens ink"><span>look here</span><i></i><span>smile</span></div>
+          <button type="button" class="stop ink" id="stopCam" hidden>stop camera</button>
+          <button type="button" class="camera-on ink" id="cameraOn">turn on camera</button>
+          <p class="status ink" id="status" aria-live="polite"></p>
+          <div class="count ink" id="count" aria-live="assertive"></div>
+          <div class="flash" id="flashFx"></div>
+        </div>
+
+        <ol class="slots" id="slots">
+          <li>1</li><li>2</li><li>3</li><li>4</li>
+        </ol>
+
+        <div class="controls ink">
+          <button type="button" class="chip" id="retake">retake</button>
+          <button type="button" class="start" id="start" aria-label="press to start" disabled>
+            <img src="assets/start.webp" alt="">
+          </button>
+          <button type="button" class="chip" id="flash" aria-pressed="true">flash on</button>
+        </div>
+      </section>
+
+      <section class="result" id="result" hidden>
+        <img id="strip" alt="your photo strip">
+        <div class="result-actions ink">
+          <button type="button" class="chip solid" id="save">save strip</button>
+          <button type="button" class="chip" id="again">take another</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot ink">avokuddle studio</footer>
+  </div>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="js/bloom.js?v=3d3"></script>
+  <script src="js/strip.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/music.js"></script>
+  <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+</body>
+</html>
