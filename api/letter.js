@@ -86,12 +86,13 @@ async function notify(letter) {
     greetingTimeout: 8000,
     socketTimeout: 10000,
   });
-  await transport.sendMail({
+  const info = await transport.sendMail({
     from: { name: config.siteName, address: user },
     to,
     subject: fill(config.email.subject, letter.name),
     text: `${fill(config.email.line, letter.name)}\n\n${config.email.button}: ${link}`,
     html,
   });
+  console.log('notification email sent', info.response || '', `accepted=${(info.accepted || []).length}`);
   return true;
 }
