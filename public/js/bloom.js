@@ -5,7 +5,7 @@
   const CORNERS = [
     {
       canvas: 'lilyLeft',
-      src: 'assets/lily-left-2.webp',
+      src: '/assets/lily-left-2.webp',
       flowers: [
         { x: 77, y: 807, r: 140, axis: -110, delay: 0.1, crimson: true },
         { x: 65, y: 950, r: 124, axis: -105, delay: 0.04, crimson: true },
@@ -15,7 +15,7 @@
     },
     {
       canvas: 'lilyRight',
-      src: 'assets/lily-right-4.webp',
+      src: '/assets/lily-right-4.webp',
       flowers: [
         { x: 439, y: 242, r: 140, axis: -70, delay: 0.22, crimson: true },
         { x: 451, y: 385, r: 124, axis: -75, delay: 0.12, crimson: true },
@@ -175,7 +175,7 @@
     return c;
   }
 
-  const budImage = loadImage('assets/bud.webp').catch(() => null);
+  const budImage = loadImage('/assets/bud.webp').catch(() => null);
 
   /* ---------- 3D renderer: each lily photo becomes a petal surface folded in a vertex shader ---------- */
 

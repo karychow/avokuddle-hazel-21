@@ -27,6 +27,7 @@
     again: $('again'),
   };
 
+  const CFG = window.SITE_CONFIG || {};
   const SHOTS = 4;
   const joinId = new URLSearchParams(location.search).get('join');
 
@@ -46,6 +47,7 @@
     remoteLive: false,
     themName: '',
     stripBlob: null,
+    stripCanvas: null,
   };
 
   const store = {
@@ -66,7 +68,7 @@
   function send(msg) {
     if (state.conn && state.conn.open) state.conn.send(msg);
   }
-  window.booth = { send };
+  window.booth = { send, strip: () => state.stripCanvas };
 
   /* ---------- mode ---------- */
 
@@ -345,7 +347,7 @@
     if (!state.peer || !state.peer.id) return;
     const link = `${location.origin}${location.pathname}?join=${encodeURIComponent(state.peer.id)}`;
     if (coarse && navigator.share) {
-      try { await navigator.share({ url: link, title: "hazel's 21" }); return; } catch (e) { if (e.name === 'AbortError') return; }
+      try { await navigator.share({ url: link, title: CFG.occasion || document.title }); return; } catch (e) { if (e.name === 'AbortError') return; }
     }
     try {
       await navigator.clipboard.writeText(link);
@@ -375,8 +377,11 @@
     state.mine = []; state.theirs = []; state.fallback = [];
     el.count.textContent = '';
     el.slots.forEach((s, i) => { s.classList.remove('filled'); s.style.backgroundImage = ''; s.textContent = String(i + 1); });
+    const hadStrip = !el.result.hidden;
     el.result.hidden = true;
     el.booth.hidden = false;
+    state.stripCanvas = null;
+    if (hadStrip) document.dispatchEvent(new CustomEvent('booth:strip-reset'));
     if (broadcast) send({ t: 'retake' });
     refresh();
   }
@@ -442,10 +447,12 @@
     state.stripBlob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
     if (el.strip.src.startsWith('blob:')) URL.revokeObjectURL(el.strip.src);
     el.strip.src = URL.createObjectURL(state.stripBlob);
+    state.stripCanvas = canvas;
     el.booth.hidden = true;
     el.result.hidden = false;
     state.shooting = false;
     refresh();
+    document.dispatchEvent(new CustomEvent('booth:strip-ready', { detail: { canvas } }));
   }
 
   el.start.addEventListener('click', () => {
@@ -462,7 +469,7 @@
 
   el.save.addEventListener('click', async () => {
     if (!state.stripBlob) return;
-    const file = new File([state.stripBlob], 'hazels-21-strip.png', { type: 'image/png' });
+    const file = new File([state.stripBlob], `${CFG.stripFilename || 'photo-strip'}.png`, { type: 'image/png' });
     if (coarse && navigator.canShare && navigator.canShare({ files: [file] })) {
       try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; }
     }

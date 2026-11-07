@@ -7,7 +7,7 @@
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
-    img.src = 'assets/lace.webp';
+    img.src = '/assets/lace.webp';
   });
 
   function tone(canvas) {
@@ -173,7 +173,7 @@
 
     const cx = left + inner / 2;
     const fy = H - foot;
-    sketchText(ctx, "hazel's 21", cx, fy + 100, 76);
+    sketchText(ctx, (window.SITE_CONFIG && window.SITE_CONFIG.occasion) || '', cx, fy + 100, 76);
 
     const who = names.filter(Boolean).join(' & ');
     if (who) sketchText(ctx, who, cx, fy + 148, 38);
