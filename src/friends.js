@@ -201,6 +201,7 @@ async function openComposer() {
   fields.append(song, msg, sendBtn);
   inner.appendChild(fields);
   box.appendChild(inner);
+  box.appendChild(h('p', 'site-foot ink', { text: CFG.siteName || '' }));
 
   // Reuse the record: start with whatever is on the booth's vinyl.
   const current = draft.song || (window.music && window.music.current() ? window.music.openUrl(window.music.current()) : '');
@@ -299,7 +300,6 @@ async function openComposer() {
     stage.destroy();
     inner.textContent = '';
     const sent = h('div', 'sent');
-    sent.appendChild(h('div', 'sent-seal', { text: '♡', 'aria-hidden': 'true' }));
     sent.appendChild(h('p', 'sent-title ink', { text: L.sent }));
     sent.appendChild(h('p', 'sent-note ink', { text: L.sentNote }));
     const done = h('button', 'chip ink', { type: 'button', text: L.close });

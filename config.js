@@ -16,6 +16,8 @@ export default {
   },
 
   labels: {
+    toneBW: 'b&w',
+    toneTitle: 'black & white vintage',
     friendsButton: "friend's exclusive",
     friendsVerified: 'friend ♡',
     codePrompt: 'the friends code',

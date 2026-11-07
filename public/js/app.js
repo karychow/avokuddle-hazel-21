@@ -20,6 +20,7 @@
     retake: $('retake'),
     stopCam: $('stopCam'),
     flash: $('flash'),
+    tone: $('toneBtn'),
     status: $('status'),
     result: $('result'),
     strip: $('strip'),
@@ -36,6 +37,7 @@
     role: joinId ? 'guest' : 'host',
     stream: null,
     flash: true,
+    bw: false,
     shooting: false,
     shootId: null,
     mine: [],
@@ -64,6 +66,17 @@
   const coarse = window.matchMedia('(pointer: coarse)').matches;
 
   function say(text) { el.status.textContent = text || ''; }
+
+  /* ---------- black & white vintage ---------- */
+
+  function setTone(bw, broadcast) {
+    state.bw = !!bw;
+    el.tone.classList.toggle('is-on', state.bw);
+    el.tone.setAttribute('aria-pressed', String(state.bw));
+    el.frame.classList.toggle('bw', state.bw);
+    store.set('avk-bw', state.bw ? '1' : '0');
+    if (broadcast) send({ t: 'tone', bw: state.bw });
+  }
 
   function send(msg) {
     if (state.conn && state.conn.open) state.conn.send(msg);
@@ -239,6 +252,7 @@
     let beat = null;
     conn.on('open', () => {
       conn.send({ t: 'hello', name: myName() });
+      if (state.role === 'host') conn.send({ t: 'tone', bw: state.bw });
       const song = window.music && window.music.current();
       if (song) conn.send({ t: 'song', uri: song });
       say('');
@@ -322,6 +336,7 @@
         if (state.role === 'guest') callHost();
         break;
       case 'start':
+        if (typeof msg.bw === 'boolean') setTone(msg.bw, false);
         if (!state.shooting && state.stream) runShoot(String(msg.id), false);
         break;
       case 'shot':
@@ -333,6 +348,9 @@
         break;
       case 'retake':
         resetShoot(false);
+        break;
+      case 'tone':
+        if (!state.shooting) setTone(!!msg.bw, false);
         break;
       case 'busy':
         say('this booth already has two people');
@@ -399,7 +417,7 @@
     state.shooting = true;
     state.shootId = id;
     refresh();
-    if (initiator && together) send({ t: 'start', id });
+    if (initiator && together) send({ t: 'start', id, bw: state.bw });
     const alive = () => state.shooting && state.shootId === id;
     const aspect = together ? 3 / 4 : 4 / 3;
 
@@ -413,10 +431,10 @@
       if (!alive()) return;
       el.count.textContent = '';
       flash();
-      const me = Strip.captureFrame(el.videoMe, aspect, true);
+      const me = Strip.captureFrame(el.videoMe, aspect, true, state.bw);
       state.mine[i] = me;
       if (together) {
-        state.fallback[i] = Strip.captureFrame(el.videoThem, aspect, true);
+        state.fallback[i] = Strip.captureFrame(el.videoThem, aspect, true, state.bw);
         send({ t: 'shot', id, i, img: me.toDataURL('image/jpeg', 0.86) });
       }
       const slot = el.slots[i];
@@ -461,6 +479,10 @@
   });
   el.retake.addEventListener('click', () => resetShoot(true));
   el.again.addEventListener('click', () => resetShoot(true));
+  el.tone.addEventListener('click', () => {
+    if (state.shooting) return;
+    setTone(!state.bw, true);
+  });
   el.flash.addEventListener('click', () => {
     state.flash = !state.flash;
     el.flash.textContent = state.flash ? 'flash on' : 'flash off';
@@ -485,6 +507,8 @@
   window.addEventListener('pagehide', () => { if (state.peer) state.peer.destroy(); });
 
   /* ---------- boot ---------- */
+
+  setTone(store.get('avk-bw') === '1', false);
 
   if (state.role === 'guest') {
     el.modes.classList.add('locked');

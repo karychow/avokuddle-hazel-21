@@ -2,6 +2,7 @@
   const SCRIPT = "'Great Vibes', 'Pinyon Script', cursive";
   const FABRIC = '#330505';
   const IVORY = '#f3ead8';
+  const LACE = '#efe2c6';
 
   const lace = new Promise((resolve) => {
     const img = new Image();
@@ -10,10 +11,28 @@
     img.src = '/assets/lace.webp';
   });
 
-  function tone(canvas) {
+  // Black & white vintage: warm-toned monochrome, punchy contrast, lifted
+  // blacks and film grain, like an old photobooth print.
+  function toneBW(d) {
+    for (let i = 0; i < d.length; i += 4) {
+      let l = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      l = (l - 118) * 1.28 + 122;
+      l = 22 + l * 0.86 + (Math.random() - 0.5) * 22;
+      d[i] = l * 1.05 + 4;
+      d[i + 1] = l * 0.98 + 1;
+      d[i + 2] = l * 0.86;
+    }
+  }
+
+  function tone(canvas, bw) {
     const ctx = canvas.getContext('2d');
     const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const d = img.data;
+    if (bw) {
+      toneBW(d);
+      ctx.putImageData(img, 0, 0);
+      return canvas;
+    }
     for (let i = 0; i < d.length; i += 4) {
       let r = d[i], g = d[i + 1], b = d[i + 2];
       const sr = 0.393 * r + 0.769 * g + 0.189 * b;
@@ -34,8 +53,9 @@
     return canvas;
   }
 
-  // Center-crops the video to the given aspect (w/h) and returns a toned canvas.
-  function captureFrame(video, aspect, mirror) {
+  // Center-crops the video to the given aspect (w/h) and returns a toned canvas
+  // (black & white vintage when bw is true).
+  function captureFrame(video, aspect, mirror, bw) {
     const outW = aspect >= 1 ? 960 : 720;
     const outH = Math.round(outW / aspect);
     const c = document.createElement('canvas');
@@ -52,7 +72,7 @@
       ctx.drawImage(video, sx, sy, sw, sh, 0, 0, outW, outH);
       ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
-    return tone(c);
+    return tone(c, bw);
   }
 
   // Staggered ivory polka dots, spaced like the reference fabric (675px wide swatch).
@@ -94,15 +114,62 @@
     ctx.restore();
   }
 
-  function drawPrint(ctx, src, x, y, w, h) {
-    const border = Math.round(w * 0.025);
+  // A thin cream lace frame: scalloped outer edge with a pierced hole in each
+  // scallop, a row of tiny eyelets, and a fine inner rule around the photo.
+  function drawLaceBorder(ctx, x, y, w, h, b) {
+    const ox = x - b, oy = y - b, ow = w + b * 2, oh = h + b * 2;
+    const r = b * 0.42;
+    const edge = (len) => Math.max(1, Math.round(len / (r * 2.05)));
+    const scallops = [];
+    const along = (x0, y0, x1, y1) => {
+      const n = edge(Math.hypot(x1 - x0, y1 - y0));
+      for (let i = 0; i <= n; i++) scallops.push([x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n]);
+    };
+    along(ox + r, oy + r, ox + ow - r, oy + r);
+    along(ox + ow - r, oy + r, ox + ow - r, oy + oh - r);
+    along(ox + ow - r, oy + oh - r, ox + r, oy + oh - r);
+    along(ox + r, oy + oh - r, ox + r, oy + r);
+
+    const path = new Path2D();
+    path.rect(ox + r * 0.6, oy + r * 0.6, ow - r * 1.2, oh - r * 1.2);
+    scallops.forEach(([cx, cy]) => { path.moveTo(cx + r, cy); path.arc(cx, cy, r, 0, Math.PI * 2); });
+
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,.5)';
     ctx.shadowBlur = 22;
     ctx.shadowOffsetY = 8;
-    ctx.fillStyle = IVORY;
-    ctx.fillRect(x - border, y - border, w + border * 2, h + border * 2);
+    ctx.fillStyle = LACE;
+    ctx.fill(path, 'nonzero');
     ctx.restore();
+
+    // pierced holes (fabric showing through) and eyelets
+    ctx.save();
+    ctx.fillStyle = 'rgba(51, 5, 5, .55)';
+    scallops.forEach(([cx, cy]) => { ctx.beginPath(); ctx.arc(cx, cy, r * 0.28, 0, Math.PI * 2); ctx.fill(); });
+    ctx.fillStyle = 'rgba(120, 92, 70, .35)';
+    const er = Math.max(0.8, b * 0.09);
+    const mid = b * 0.62;
+    const ring = (x0, y0, x1, y1) => {
+      const len = Math.hypot(x1 - x0, y1 - y0);
+      const n = Math.max(1, Math.round(len / (b * 0.42)));
+      for (let i = 0; i <= n; i++) {
+        ctx.beginPath();
+        ctx.arc(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, er, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+    ring(x - mid + b * 0.1, y - mid + b * 0.1, x + w + mid - b * 0.1, y - mid + b * 0.1);
+    ring(x + w + mid - b * 0.1, y - mid + b * 0.1, x + w + mid - b * 0.1, y + h + mid - b * 0.1);
+    ring(x + w + mid - b * 0.1, y + h + mid - b * 0.1, x - mid + b * 0.1, y + h + mid - b * 0.1);
+    ring(x - mid + b * 0.1, y + h + mid - b * 0.1, x - mid + b * 0.1, y - mid + b * 0.1);
+    ctx.strokeStyle = 'rgba(120, 92, 70, .45)';
+    ctx.lineWidth = Math.max(0.8, b * 0.06);
+    ctx.strokeRect(x - b * 0.22, y - b * 0.22, w + b * 0.44, h + b * 0.44);
+    ctx.restore();
+  }
+
+  function drawPrint(ctx, src, x, y, w, h) {
+    drawLaceBorder(ctx, x, y, w, h, Math.round(w * 0.04));
 
     ctx.save();
     ctx.beginPath();
@@ -147,7 +214,7 @@
     const W = pair ? 760 : 640;
     const left = Math.round(W * (pair ? 0.2 : 0.25));
     const inner = Math.round(W * (pair ? 0.66 : 0.6));
-    const top = 72, gap = 46, colGap = 14, foot = 210;
+    const top = 72, gap = 46, colGap = pair ? 26 : 14, foot = 210;
     const cellW = pair ? (inner - colGap) / 2 : inner;
     const cellH = pair ? Math.round(cellW * 4 / 3) : Math.round(cellW * 3 / 4);
     const H = top + rows.length * cellH + (rows.length - 1) * gap + foot;

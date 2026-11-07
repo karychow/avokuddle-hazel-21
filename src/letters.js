@@ -109,6 +109,7 @@ function openLetter(id) {
   });
   inner.appendChild(stage.el);
   el.view.appendChild(inner);
+  el.view.appendChild(h('p', 'site-foot ink', { text: CFG.siteName || '' }));
 
   const uri = letter.songUrl && window.music ? window.music.parse(letter.songUrl) : null;
   // Opening the letter is a tap, so try to start the song straight away like
