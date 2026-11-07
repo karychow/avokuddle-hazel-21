@@ -300,6 +300,8 @@ button:disabled { cursor: default; }
   color: var(--ivory);
 }
 .status:empty { display: none; }
+/* in together mode keep messages clear of the two name tags */
+.frame.together .status { bottom: auto; top: 50px; }
 
 .count {
   position: absolute; inset: 0;

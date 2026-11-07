@@ -181,21 +181,83 @@
 
   /* ---------- peers ---------- */
 
+  /* The invite server (PeerJS) only introduces the two phones. Its connection
+     drops whenever a phone backgrounds the page (e.g. switching to Messages to
+     send the invite) or the network blips, so keep quietly reconnecting with
+     the same invite id instead of giving up. */
+
+  const NET_ERRORS = ['network', 'server-error', 'socket-error', 'socket-closed', 'disconnected'];
+  const SERVER_MSGS = new Set();
+  const net = { timer: null, tries: 0, idTries: 0, guestTries: 0 };
+
+  function sayServer(text) {
+    SERVER_MSGS.add(text);
+    say(text);
+  }
+  function clearServerMsg() {
+    if (SERVER_MSGS.has(el.status.textContent)) say('');
+  }
+
+  function retrySoon(delay) {
+    clearTimeout(net.timer);
+    const wait = delay != null ? delay : Math.min(8000, 800 * 2 ** net.tries++);
+    net.timer = setTimeout(recoverPeer, wait);
+  }
+
+  function recoverPeer() {
+    clearTimeout(net.timer);
+    if (state.mode !== 'together' || !navigator.onLine) {
+      if (state.mode === 'together') retrySoon(3000);
+      return;
+    }
+    const peer = state.peer;
+    if (!peer || peer.destroyed) {
+      // The peer is gone for good: build a new one (same invite id for the host).
+      // Live video/data connections are already closed by then.
+      state.peer = null;
+      if (state.role === 'host') hostPeer(); else guestPeer();
+      return;
+    }
+    if (peer.disconnected) {
+      try { peer.reconnect(); } catch { try { peer.destroy(); } catch {} state.peer = null; retrySoon(500); }
+    } else if (state.role === 'guest' && !(state.conn && state.conn.open)) {
+      connectToHost(peer);
+    }
+  }
+
+  function onNetError(peer, err) {
+    if (state.peer !== peer) return;
+    if (net.tries >= 3) sayServer('reconnecting to the invite server…');
+    if (net.tries >= 8) sayServer('still reconnecting, check your wifi or data');
+    retrySoon();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.mode === 'together') { net.tries = 0; recoverPeer(); }
+  });
+  window.addEventListener('online', () => { if (state.mode === 'together') { net.tries = 0; recoverPeer(); } });
+
   function hostPeer() {
     if (state.peer || typeof Peer === 'undefined') {
       if (typeof Peer === 'undefined') say('invites aren’t available right now, check your connection');
       return;
     }
-    el.invite.disabled = true;
-    el.invite.textContent = 'making link…';
+    if (!(state.conn && state.conn.open)) {
+      el.invite.disabled = true;
+      el.invite.textContent = 'making link…';
+    }
     const id = store.sget('avk-host') || `avokuddle-${rand(10)}`;
     const peer = new Peer(id, { debug: 0 });
     state.peer = peer;
 
     peer.on('open', (pid) => {
+      if (state.peer !== peer) return;
       store.sset('avk-host', pid);
+      net.tries = 0;
+      net.idTries = 0;
       el.invite.disabled = false;
       el.invite.textContent = 'copy invite';
+      clearServerMsg();
     });
     peer.on('connection', (conn) => {
       if (state.conn && state.conn.open) {
@@ -205,19 +267,28 @@
       bindConn(conn);
     });
     peer.on('call', answerCall);
-    peer.on('disconnected', () => { if (!peer.destroyed) peer.reconnect(); });
+    peer.on('disconnected', () => { if (state.peer === peer && !peer.destroyed) retrySoon(300); });
     peer.on('error', (err) => {
+      if (state.peer !== peer) return;
       if (err.type === 'unavailable-id') {
+        // Usually our own old connection still holding the id after a drop:
+        // wait for the server to release it so the invite link keeps working.
+        try { peer.destroy(); } catch {}
+        state.peer = null;
+        if (++net.idTries <= 8) { retrySoon(2500); return; }
         store.sdel('avk-host');
-        teardownPeer();
+        net.idTries = 0;
+        sayServer('your invite link changed, copy it again');
         hostPeer();
         return;
       }
-      if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(err.type)) {
-        el.invite.textContent = 'copy invite';
-        say('couldn’t reach the invite server, try again in a moment');
-      }
+      if (NET_ERRORS.includes(err.type)) onNetError(peer, err);
     });
+  }
+
+  function connectToHost(peer) {
+    if (state.conn && state.conn.open) return;
+    bindConn(peer.connect(joinId, { reliable: true }));
   }
 
   function guestPeer() {
@@ -225,19 +296,35 @@
     if (typeof Peer === 'undefined') { say('couldn’t connect, check your connection and reopen the invite'); return; }
     const peer = new Peer({ debug: 0 });
     state.peer = peer;
-    say('joining…');
+    if (!(state.conn && state.conn.open)) say('joining…');
     peer.on('open', () => {
-      bindConn(peer.connect(joinId, { reliable: true }));
+      if (state.peer !== peer) return;
+      net.tries = 0;
+      clearServerMsg();
+      connectToHost(peer);
     });
     peer.on('call', answerCall);
-    peer.on('disconnected', () => { if (!peer.destroyed) peer.reconnect(); });
+    peer.on('disconnected', () => { if (state.peer === peer && !peer.destroyed) retrySoon(300); });
     peer.on('error', (err) => {
-      if (err.type === 'peer-unavailable') say('this invite has ended. ask for a new link');
-      else if (['network', 'server-error', 'socket-error', 'socket-closed'].includes(err.type)) say('connection lost, reopen the invite');
+      if (state.peer !== peer) return;
+      if (err.type === 'peer-unavailable') {
+        // The host may just be reconnecting (e.g. they switched apps): keep trying for a while.
+        if (++net.guestTries <= 20) {
+          sayServer('waiting for the booth to open…');
+          clearTimeout(net.timer);
+          net.timer = setTimeout(() => { if (state.peer === peer && !peer.destroyed) connectToHost(peer); }, 3000);
+        } else {
+          say('this invite has ended. ask for a new link');
+        }
+        return;
+      }
+      if (NET_ERRORS.includes(err.type)) onNetError(peer, err);
     });
   }
 
   function teardownPeer() {
+    clearTimeout(net.timer);
+    net.tries = net.idTries = net.guestTries = 0;
     if (state.call) state.call.close();
     if (state.conn) state.conn.close();
     if (state.peer) state.peer.destroy();
@@ -250,7 +337,10 @@
     state.conn = conn;
     let lastSeen = Date.now();
     let beat = null;
+    let wasOpen = false;
     conn.on('open', () => {
+      wasOpen = true;
+      net.guestTries = 0;
       conn.send({ t: 'hello', name: myName() });
       if (state.role === 'host') conn.send({ t: 'tone', bw: state.bw });
       const song = window.music && window.music.current();
@@ -278,7 +368,13 @@
       hideRemote();
       if (state.shooting) resetShoot(false);
       setThemName('');
-      say(state.role === 'guest' ? 'the booth closed. reopen the invite to join again' : 'your person left');
+      if (state.role === 'guest' && state.mode === 'together') {
+        // Rejoin on our own: the host may have just switched apps for a moment.
+        if (wasOpen) sayServer('the booth paused, reconnecting…');
+        retrySoon(2000);
+      } else if (wasOpen) {
+        say('your person left');
+      }
       refresh();
     }
   }
